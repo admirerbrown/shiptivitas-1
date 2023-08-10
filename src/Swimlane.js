@@ -3,7 +3,9 @@ import Card from './Card';
 import './Swimlane.css';
 
 export default class Swimlane extends React.Component {
+ 
   render() {
+    // console.log(this.props.clients)
     const cards = this.props.clients.map(client => {
       return (
         <Card
