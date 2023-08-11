@@ -1,119 +1,93 @@
-import React from 'react';
-import Dragula from 'dragula';
-import 'dragula/dist/dragula.css';
-import Swimlane from './Swimlane';
-import './Board.css';
+import React from "react";
+import Dragula from "dragula";
+import "dragula/dist/dragula.css";
+import Swimlane from "./Swimlane";
+import "./Board.css";
+import BoardCardList from "./BoardCardList";
 
 export default class Board extends React.Component {
-
   constructor(props) {
     super(props);
-    const clients = this.getClients();
+    const clients = BoardCardList;
 
     this.state = {
       clients: {
-        backlog: clients.filter(client => !client.status || client.status === 'backlog'),
-        inProgress: clients.filter(client => client.status && client.status === 'in-progress'),
-        complete: clients.filter(client => client.status && client.status === 'complete'),
-      }
-    }
+        backlog: clients.filter(
+          (client) => !client.status || client.status === "backlog"
+        ),
+        inProgress: clients.filter(
+          (client) => client.status && client.status === "in-progress"
+        ),
+        complete: clients.filter(
+          (client) => client.status && client.status === "complete"
+        ),
+      },
+    };
     this.swimlanes = {
       backlog: React.createRef(),
       inProgress: React.createRef(),
       complete: React.createRef(),
-    }
+    };
   }
 
-
   componentDidMount() {
-    // Initialize Dragula
     const containers = [
       this.swimlanes.backlog.current,
       this.swimlanes.inProgress.current,
       this.swimlanes.complete.current,
-
     ];
 
     const drake = Dragula(containers);
 
-    // Add event listener for 'drop' event
-    drake.on('drop', function (el, target, source) {
-      // Get the swimlane names from the refs
-      const _to = Object.keys(this.swimlanes).find(key => this.swimlanes[key].current.contains(target));
-      const _from = Object.keys(this.swimlanes).find(key => this.swimlanes[key].current.contains(source));
-
-      // Get the card ID from the moved element's dataset
-      const cardId = el.dataset.id;
-
-      // Update the state
-      if (_to !== _from) {
-        const cards = this.state.clients;
-        let movedLane = cards[_from];
-        const newCardLane = cards[_to];
-
-        movedLane.forEach((card, index) => {
-          if (card.id === cardId) {
-            _to === 'inProgress' ? card.status = 'in-progress' : card.status = _to;
-            newCardLane.push(card);
-            cards[_from] = cards[_from].filter(item => item.id !== cardId); //bug line
-          }
-        })
-
-
-        let newClient = [...cards.backlog, ...cards.inProgress, ...cards.complete];
-        // console.log(newClient);
-
-        this.setState(
-          {
-            getClients() {
-              newClient.map(companyDetails => ({
-                id: companyDetails[0],
-                name: companyDetails[1],
-                description: companyDetails[2],
-                status: companyDetails[3],
-              }));
-            }
-          }
+    drake.on(
+      "drop",
+      function (el, target, source) {
+        const columnMovedFrom = Object.keys(this.swimlanes).find((key) =>
+          this.swimlanes[key].current.contains(source)
         );
-      }
+        const columnMovingTo = Object.keys(this.swimlanes).find((key) =>
+          this.swimlanes[key].current.contains(target)
+        );
 
-    }.bind(this));
-  }
+        const cardMovedId = el.dataset.id;
+        const cardMoved = this.state.clients[columnMovedFrom].find(
+          (card) => card.id === cardMovedId
+        );
 
+        const cardMovedIndex = this.state.clients[columnMovedFrom].findIndex(
+          (card) => card.id === cardMovedId
+        );
 
-  getClients() {
-    return [
-      ['1', 'Stark, White and Abbott', 'Cloned Optimal Architecture', 'in-progress'],
-      ['2', 'Wiza LLC', 'Exclusive Bandwidth-Monitored Implementation', 'complete'],
-      ['3', 'Nolan LLC', 'Vision-Oriented 4Thgeneration Graphicaluserinterface', 'backlog'],
-      ['4', 'Thompson PLC', 'Streamlined Regional Knowledgeuser', 'in-progress'],
-      ['5', 'Walker-Williamson', 'Team-Oriented 6Thgeneration Matrix', 'in-progress'],
-      ['6', 'Boehm and Sons', 'Automated Systematic Paradigm', 'backlog'],
-      ['7', 'Runolfsson, Hegmann and Block', 'Integrated Transitional Strategy', 'backlog'],
-      ['8', 'Schumm-Labadie', 'Operative Heuristic Challenge', 'backlog'],
-      ['9', 'Kohler Group', 'Re-Contextualized Multi-Tasking Attitude', 'backlog'],
-      ['10', 'Romaguera Inc', 'Managed Foreground Toolset', 'backlog'],
-      ['11', 'Reilly-King', 'Future-Proofed Interactive Toolset', 'complete'],
-      ['12', 'Emard, Champlin and Runolfsdottir', 'Devolved Needs-Based Capability', 'backlog'],
-      ['13', 'Fritsch, Cronin and Wolff', 'Open-Source 3Rdgeneration Website', 'complete'],
-      ['14', 'Borer LLC', 'Profit-Focused Incremental Orchestration', 'backlog'],
-      ['15', 'Emmerich-Ankunding', 'User-Centric Stable Extranet', 'in-progress'],
-      ['16', 'Willms-Abbott', 'Progressive Bandwidth-Monitored Access', 'in-progress'],
-      ['17', 'Brekke PLC', 'Intuitive User-Facing Customerloyalty', 'complete'],
-      ['18', 'Bins, Toy and Klocko', 'Integrated Assymetric Software', 'backlog'],
-      ['19', 'Hodkiewicz-Hayes', 'Programmable Systematic Securedline', 'backlog'],
-      ['20', 'Murphy, Lang and Ferry', 'Organized Explicit Access', 'backlog'],
-    ].map(companyDetails => ({
-      id: companyDetails[0],
-      name: companyDetails[1],
-      description: companyDetails[2],
-      status: companyDetails[3],
-    }));
-  }
-  renderSwimlane(name, clients, ref) {
-    return (
-      <Swimlane name={name} clients={clients} dragulaRef={ref} />
+        if (columnMovingTo !== columnMovedFrom) {
+          const columnMovingToCards = this.state.clients[columnMovingTo];
+          const columnMovingFromCards = this.state.clients[columnMovedFrom];
+
+          const newStatus =
+            columnMovingTo === "inProgress" ? "in-progress" : columnMovingTo;
+
+          const cardUpdated = { ...cardMoved, status: newStatus };
+
+          columnMovingFromCards.splice(cardMovedIndex, 1);
+          columnMovingToCards.push(cardUpdated);
+
+          const updatedClient = {
+            ...this.state.clients,
+            [columnMovedFrom]: columnMovingFromCards,
+            [columnMovingTo]: columnMovingToCards,
+          };
+
+          console.log(updatedClient);
+
+          this.setState({
+            clients: updatedClient,
+          });
+        }
+      }.bind(this)
     );
+  }
+
+  renderSwimlane(name, clients, ref) {
+    return <Swimlane name={name} clients={clients} dragulaRef={ref} />;
   }
 
   render() {
@@ -122,13 +96,25 @@ export default class Board extends React.Component {
         <div className="container-fluid">
           <div className="row">
             <div className="col-md-4">
-              {this.renderSwimlane('Backlog', this.state.clients.backlog, this.swimlanes.backlog)}
+              {this.renderSwimlane(
+                "Backlog",
+                this.state.clients.backlog,
+                this.swimlanes.backlog
+              )}
             </div>
             <div className="col-md-4">
-              {this.renderSwimlane('In Progress', this.state.clients.inProgress, this.swimlanes.inProgress)}
+              {this.renderSwimlane(
+                "In Progress",
+                this.state.clients.inProgress,
+                this.swimlanes.inProgress
+              )}
             </div>
             <div className="col-md-4">
-              {this.renderSwimlane('Complete', this.state.clients.complete, this.swimlanes.complete)}
+              {this.renderSwimlane(
+                "Complete",
+                this.state.clients.complete,
+                this.swimlanes.complete
+              )}
             </div>
           </div>
         </div>
